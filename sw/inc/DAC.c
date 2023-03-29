@@ -11,26 +11,93 @@
  *      https://www.ti.com/lit/ds/symlink/tlv5618a.pdf?ts=1676400608127&ref_url=https%253A%252F%252Fwww.google.com%252F
  */
 
+#include <stdbool.h>
+
 #include "./DAC.h"
 #include "./tm4c123gh6pm.h"
 
+#define TFT_CS                  (*((volatile uint32_t *)0x40007020))
+#define TFT_CS_LOW              0           // CS normally controlled by hardware
+#define TFT_CS_HIGH             0x08
+#define DC                      (*((volatile uint32_t *)0x40007100))
+#define DC_COMMAND              0
+#define DC_DATA                 0x40
+#define RESET                   (*((volatile uint32_t *)0x40007200))
+#define RESET_LOW               0
+#define RESET_HIGH              0x80
+
+const unsigned short Wave[32] = {
+  1024,1122,1215,1302,1378,1440,1486,1514,1524,1514,1486,
+  1440,1378,1302,1215,1122,1024,926,833,746,670,608,
+  562,534,524,534,562,608,670,746,833,926
+};
+
+bool dac_on;
+bool high_freq;
+uint8_t wave_index;
+bool wave_parity;
+
+
 int dac_init() {
-    /**
-     * Unified_Port_Init in Lab5.c calls Port_D_Init, which initializes the Port
-     * D GPIOs for the appropriate alternate functionality (SSI).
-     *
-     * According to Table 15-1. SSI Signals in the datasheet, this corresponds
-     * to SSI1. The corresponding Valvanoware register defines are at L302 and
-     * L2670 in inc/tm4c123gh6pm.h. Use this in combination with the datasheet
-     * or any existing code to write your driver! An example of how to
-     * initialize SSI is found in L741 in inc/ST7735.c.
-     */
-    return 1; // UNIMPLEMENTED
+    SYSCTL_RCGCSSI_R |= 0x02;       // activate SSI1
+    SYSCTL_RCGCGPIO_R |= 0x08;      // activate port D
+
+    while((SYSCTL_PRGPIO_R&0x08) == 0){}; // ready?
+    SSI1_CR1_R = 0x00000000;        // disable SSI, master mode
+    GPIO_PORTD_AFSEL_R |= 0x0B;     // enable alt funct on PD3,1,0
+    GPIO_PORTD_DEN_R |= 0x0B;       // enable digital I/O on PD3,1,0
+    GPIO_PORTD_PCTL_R = (GPIO_PORTD_PCTL_R
+                       & 0xFFFF0F00)
+                       + 0x00002022;
+    GPIO_PORTD_AMSEL_R &= ~0x0B;    // disable analog functionality on PD
+    SSI1_CPSR_R = 0x08;             // 80MHz/8 = 10 MHz SSIClk (should work up to 20 MHz)
+    SSI1_CR0_R &= ~(0x0000FFF0);    // SCR = 0, SPH = 0, SPO = 1 Freescale
+    SSI1_CR0_R += 0x40;             // SPO = 1
+    SSI1_CR0_R |= 0x0F;             // DSS = 16-bit data
+//    SSI1_DR_R = data;               // load 'data' into transmit FIFO
+    SSI1_CR1_R |= 0x00000002;       // enable SSI
+
+    dac_on = false;
+    high_freq = false;
+    wave_index = 0;
+    wave_parity = 0;
+
+    return 0;
 }
 
-int dac_output(uint16_t data) {
+int dac_output(uint16_t data) {  // data should be the 12-bit value that will be the new dac value
     // An example of how to send data via SSI is found in L534 of inc/ST7735.c.
     // Remember that 4 out of the 16 bits is for DAC operation. The last 12 bits
     // are for data. Read the datasheet! 
-    return 1; // UNIMPLEMENTED
+
+    while((SSI1_SR_R&0x00000002)==0){};// wait until room in FIFO
+    SSI1_DR_R = data; // data out
+    return 0;
+}
+
+void dac_ISR(void) {
+    if(!dac_on) {
+        return;
+    }
+
+    dac_output(Wave[wave_index]);
+    if(high_freq || wave_parity) {
+        wave_index = (wave_index + 1) % 32;
+    }
+    wave_parity ^= 1;
+}
+
+
+void dac_off(void) {
+    dac_on = false;
+}
+
+void dac_setLowFreq(void) {
+    high_freq = false;
+    dac_on = true;
+}
+
+void dac_setHighFreq(void) {
+    high_freq = true;
+    dac_on = true;
 }

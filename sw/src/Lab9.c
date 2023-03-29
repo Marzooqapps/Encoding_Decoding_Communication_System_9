@@ -23,6 +23,18 @@
  *   __MAIN__ = 0 or ENCODER - run the encoder main
  *              1 or DECODER - run the decoder main
  */
+
+
+/*
+encoding:
+1 start bit: 0
+8 data bits: xxxxxxxx
+1 parity bit: x
+1 stop bit: 1
+
+total: 11 bits per character
+ */
+
 #define ENCODER 0
 #define DECODER 1
 #define __MAIN__ ENCODER
@@ -32,11 +44,13 @@
     /* You can include/uninclude encoder files as you see fit here. */
     #include "./lib/encoder/switches/switches.h"
     #include "./lib/encoder/tlv5616/tlv5616.h"
+    #include "./lib/encoder/encoder.h"
 #elif __MAIN__ == DECODER
     /* You can include/uninclude encoder files as you see fit here. */
     #include "./lib/decoder/adc/adc.h"
     #include "./lib/decoder/display/display.h"
     #include "./lib/decoder/fft/fft.h"
+    #include "./lib/decoder/decoder.h"
     /* Filters are also provided in /lib/Filters. */
 #endif
 
@@ -47,8 +61,11 @@
     int main(void) {
         /* TODO: Set up the required initializations here. */
 
+        Encoder_Init();
+
         while (1) {
             /* TODO: Encoder main loop. */
+            // TODO: take user input (switches.c)
         }
     }
 #elif __MAIN__ == DECODER
@@ -59,8 +76,11 @@
     int main(void) {
         /* TODO: Set up the required initializations here. */
 
+        Decoder_Init();
+
         while (1) {
             /* TODO: Decoder main loop. */
+            // TODO: Graphical output
         }
     }
 #endif

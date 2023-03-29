@@ -10,3 +10,10 @@
  */
 
 #pragma once
+
+void SampleFifo_Init(void);
+int SampleFifo_Get(uint32_t *datapt);
+int SampleFifo_Put(uint32_t data);
+
+void ADC0_InitTimer0ATriggerSeq3PD3(uint32_t period);
+void ADC0Seq3_Handler(void);

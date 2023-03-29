@@ -46,3 +46,8 @@ int dac_init();
  *         error occurred. <TODO: LIST ERROR CODES AND POSSIBLE ERROR EVENTS>
  */
 int dac_output(uint16_t data);
+
+void dac_ISR(void);
+void dac_off(void);
+void dac_setLowFreq(void);
+void dac_setHighFreq(void);
