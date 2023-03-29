@@ -9,3 +9,4 @@
  * 
  */
 
+#include "./lib/encoder/switches/switches.h"
