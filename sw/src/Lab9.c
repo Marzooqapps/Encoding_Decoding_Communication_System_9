@@ -23,6 +23,18 @@
  *   __MAIN__ = 0 or ENCODER - run the encoder main
  *              1 or DECODER - run the decoder main
  */
+
+
+/*
+encoding:
+1 start bit: 0
+8 data bits: xxxxxxxx
+1 parity bit: x
+1 stop bit: 1
+
+total: 11 bits per character
+ */
+
 #define ENCODER 0
 #define DECODER 1
 #define __MAIN__ ENCODER
