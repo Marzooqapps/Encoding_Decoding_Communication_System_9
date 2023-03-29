@@ -1,7 +1,8 @@
 #include <stdint.h>
 
-void SampleFifo_Init(void);
-int SampleFifo_Get(uint16_t *datapt);
-int SampleFifo_Put(uint16_t data);
+void DecodedBitFifo_Init(void);
+int DecodedBitFifo_Get(int *datapt);
+int DecodedBitFifo_Put(int data);
 void Decoder_Init(void);
-void Decoder_ISR(void);
+void Decoder_ConversionISR(void);
+void Decoder_DecodeISR(void);

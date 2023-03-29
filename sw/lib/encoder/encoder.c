@@ -5,6 +5,8 @@
 #include "./inc/FIFO.h"
 #include "./inc/DAC.h"
 
+#define ENCODER_PROCESS_PERIOD 31313131
+
 AddIndexFifo(Char,8,char,1,0);
 AddIndexFifo(Bit,88,bool,1,0);
 
@@ -12,6 +14,7 @@ void Encoder_Init(void) {
     CharFifo_Init();
     BitFifo_Init();
     dac_init();
+    // TODO: arm Encoder_ProcessChar with period ENCODER_PROCESS_PERIOD
 }
 
 void Encoder_ProcessChar(void) {

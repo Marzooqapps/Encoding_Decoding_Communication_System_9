@@ -53,6 +53,7 @@
 
         while (1) {
             /* TODO: Encoder main loop. */
+            // TODO: take user input (switches.c)
         }
     }
 #elif __MAIN__ == DECODER
@@ -67,6 +68,7 @@
 
         while (1) {
             /* TODO: Decoder main loop. */
+            // TODO: Graphical output
         }
     }
 #endif
