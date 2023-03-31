@@ -39,48 +39,35 @@ total: 11 bits per character
 #define DECODER 1
 #define __MAIN__ ENCODER
 
+#include "./inc/PLL.h"
+
 /* Include relevant files for the encoder depending on the value of __MAIN__ */
-#if __MAIN__ == ENCODER
-    /* You can include/uninclude encoder files as you see fit here. */
-    #include "./lib/encoder/switches/switches.h"
-    #include "./lib/encoder/tlv5616/tlv5616.h"
-    #include "./lib/encoder/encoder.h"
-#elif __MAIN__ == DECODER
-    /* You can include/uninclude encoder files as you see fit here. */
-    #include "./lib/decoder/adc/adc.h"
-    #include "./lib/decoder/display/display.h"
-    #include "./lib/decoder/fft/fft.h"
-    #include "./lib/decoder/decoder.h"
-    /* Filters are also provided in /lib/Filters. */
-#endif
+/* You can include/uninclude encoder files as you see fit here. */
+#include "./lib/encoder/switches/switches.h"
+#include "./lib/encoder/tlv5616/tlv5616.h"
+#include "./lib/encoder/encoder.h"
+/* You can include/uninclude encoder files as you see fit here. */
+#include "./lib/decoder/adc/adc.h"
+#include "./lib/decoder/display/display.h"
+#include "./lib/decoder/fft/fft.h"
+#include "./lib/decoder/decoder.h"
+/* Filters are also provided in /lib/Filters. */
 
-#if __MAIN__ == ENCODER
-    /**
-     * @brief Runs the encoder. Flash this code to one system.
-     */
-    int main(void) {
-        /* TODO: Set up the required initializations here. */
 
-        Encoder_Init();
+// Timer0A used by ADC
+// Timer1A used by Decoder
+// Timer2A used by Encoder
 
-        while (1) {
-            /* TODO: Encoder main loop. */
-            // TODO: take user input (switches.c)
-        }
+int main(void) {
+    PLL_Init(4);
+
+    Encoder_Init();
+    Decoder_Init();
+
+    Encoder_Test(1);
+
+    while (1) {
+//        Swithces_Routine();
+//        Display_Routine();
     }
-#elif __MAIN__ == DECODER
-    /**
-     * @brief Runs the decoder. Flash this code to a different system
-     * than the encoder's system.
-     */
-    int main(void) {
-        /* TODO: Set up the required initializations here. */
-
-        Decoder_Init();
-
-        while (1) {
-            /* TODO: Decoder main loop. */
-            // TODO: Graphical output
-        }
-    }
-#endif
+}

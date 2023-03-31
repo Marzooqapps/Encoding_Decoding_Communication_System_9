@@ -5,11 +5,14 @@
 #include "./inc/FIFO.h"
 #include "./inc/dsp.h"
 #include "./lib/decoder/adc/adc.h"
+#include "./lib/decoder/display/display.h"
+#include "./inc/Timer1A.h"
 
 #define SOUND_THRESHOLD 3131
-#define ADC_PERIOD 31313131
-#define CONVERSION_PERIOD 31313131
-#define DECODE_PERIOD 31313131
+#define ADC_PERIOD 5000
+#define ADC_FREQ 16000
+#define CONVERSION_PERIOD 5000
+#define DECODE_PERIOD 80000
 
 AddIndexFifo(DecodedBit,256,int,1,0);  // -1 means off, 0 means lowfreq, 1 means highfreq
 
@@ -20,18 +23,38 @@ uint8_t data;
 bool parity;
 bool parity_checked;
 
+int32_t Dump1[512];
+int32_t Dump2[512];
+int DumpIndex1;
+int DumpIndex2;
+
+uint32_t RawDump1[512];
+int RawDumpIndex1;
+
 void Decoder_Init(void) {
-    DFT_Init();
     i = 0;
     decoding_msg = false;
     data_bits_acquired = 0;
     data = 0;
     parity = 0;
     parity_checked = false;
+    DumpIndex1 = 0;
+    DumpIndex2 = 0;
 
-    ADC0_InitTimer0ATriggerSeq3PD3(ADC_PERIOD);
+    DecodedBitFifo_Init();
+
+    DFT_Init();
+    Display_Init();
+
+//    ADC0_InitTimer0ATriggerSeq3PD3(ADC_PERIOD);
+    ADC0_InitTimer0ATriggerSeq0(0, ADC_FREQ, (void *) 0);
+
     // TODO: arm Decoder_ConversionISR with period CONVERSION_PERIOD
+    Timer1A_Init(&Decoder_Test, CONVERSION_PERIOD, 3);
+
     // TODO: arm Decoder_DecodeISR with period DECODE_PERIOD
+
+
 }
 
 void Decoder_ConversionISR(void) {  // Converts output of ADC to tristate value (off/lowfreq/highfreq)
@@ -66,7 +89,7 @@ void Decoder_DecodeISR(void) { // Converts sequence of bits to character
     }
     if(bit == -1) {
         if(decoding_msg) {  // something went wrong, the whole message couldn't be decoded
-            // TODO: implement display(error message)
+            Display_Error();
             data = 0;
             decoding_msg = false;
             data_bits_acquired = 0;
@@ -80,17 +103,17 @@ void Decoder_DecodeISR(void) { // Converts sequence of bits to character
         return;
     }
     if(bit == 1 && parity_checked) {  // stop bit
-        // TODO: implement graphics_output((char) data);
         decoding_msg = false;
         data_bits_acquired = 0;
-        data = 0;
         parity = 0;
         parity_checked = false;
+        while(!DecodedCharFifo_Put((char) data));
+        data = 0;
         return;
     }
     if(data_bits_acquired == 8 && !parity_checked) {  // parity bit
         if(parity ^ bit) {  // parity check failure
-            // TODO: implement display(error message)
+            Display_ParityError();
         }
         parity_checked = true;
         return;
@@ -102,6 +125,35 @@ void Decoder_DecodeISR(void) { // Converts sequence of bits to character
     parity ^= bit;
 }
 
+void Decoder_Test(void) {
+    // When running this, adc should be armed
+
+    uint32_t x;
+    if(!SampleFifo_Get(&x)) {
+        return;
+    }
+
+    if(RawDumpIndex1 < 512) {
+        RawDump1[RawDumpIndex1] = x;
+        RawDumpIndex1++;
+    }
+
+    DFT(i, x);
+    i++;
+    if(i == 16 && DumpIndex1 < 512) {
+        int32_t amp1 = Mag1();
+        int32_t amp2 = Mag2();
+        i = 0;
+
+        Dump1[DumpIndex1] = amp1;
+        Dump2[DumpIndex2] = amp2;
+        DumpIndex1 = (DumpIndex1 + 1);
+        DumpIndex2 = (DumpIndex2 + 1);
+    }
+
+    int64_t avg_1 = 0;
+    int64_t avg_2 = 0;
+}
 
 
 
