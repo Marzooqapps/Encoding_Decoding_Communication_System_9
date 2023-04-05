@@ -40,6 +40,7 @@ total: 11 bits per character
 #define __MAIN__ ENCODER
 
 #include "./inc/PLL.h"
+#include "./inc/FIFO.h"
 
 /* Include relevant files for the encoder depending on the value of __MAIN__ */
 /* You can include/uninclude encoder files as you see fit here. */
@@ -51,6 +52,7 @@ total: 11 bits per character
 #include "./lib/decoder/display/display.h"
 #include "./lib/decoder/fft/fft.h"
 #include "./lib/decoder/decoder.h"
+#include "./inc/EdgeInterruptPortF.h"
 /* Filters are also provided in /lib/Filters. */
 
 
@@ -58,11 +60,20 @@ total: 11 bits per character
 // Timer1A used by Decoder
 // Timer2A used by Encoder
 
+//Function Declarations//
+void FifoPut0(void);
+void FifoPut1(void);
+//Function Declarations//
+
 int main(void) {
     PLL_Init(4);
 
     Encoder_Init();
     Decoder_Init();
+	
+		//Initialize Port F for input
+		EdgePortF_Init(FifoPut0, FifoPut1);
+	
 
     Encoder_Test(1);
 
@@ -70,4 +81,16 @@ int main(void) {
 //        Swithces_Routine();
 //        Display_Routine();
     }
+}
+
+
+
+//Puts a 0 in BitFifo
+void FifoPut0(void){
+	BitFifo_Put(0);
+}
+
+//Puts a one in BitFifo
+void FifoPut1(void){
+	BitFifo_Put(1);
 }

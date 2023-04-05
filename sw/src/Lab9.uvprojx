@@ -434,6 +434,16 @@
               <FileType>2</FileType>
               <FilePath>..\inc\cr4_fft_1024_stm32.s</FilePath>
             </File>
+            <File>
+              <FileName>EdgeInterruptPortF.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\inc\EdgeInterruptPortF.c</FilePath>
+            </File>
+            <File>
+              <FileName>encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\encoder\encoder.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
