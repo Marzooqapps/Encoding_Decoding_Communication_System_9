@@ -59,27 +59,34 @@ total: 11 bits per character
 // Timer0A used by ADC
 // Timer1A used by Decoder
 // Timer2A used by Encoder
+// Timer3A used by input
 
 //Function Declarations//
 void FifoPut0(void);
 void FifoPut1(void);
 //Function Declarations//
 
+uint8_t data;
+uint8_t data_length;
+
 int main(void) {
     PLL_Init(4);
+
+    data = 0;
+    data_length = 0;
 
     Encoder_Init();
     Decoder_Init();
 	
-		//Initialize Port F for input
-		EdgePortF_Init(FifoPut0, FifoPut1);
+    //Initialize Port F for input
+    EdgePortF_Init(FifoPut0, FifoPut1);
 	
 
-    Encoder_Test(1);
+//    Encoder_Test(-1);
 
     while (1) {
 //        Swithces_Routine();
-//        Display_Routine();
+        Display_Routine();
     }
 }
 
@@ -87,10 +94,23 @@ int main(void) {
 
 //Puts a 0 in BitFifo
 void FifoPut0(void){
-	BitFifo_Put(0);
+	data <<= 1;
+	data_length++;
+	if(data_length == 8) {
+	    data_length = 0;
+	    while(!CharFifo_Put((char) data));
+	    data = 0;
+	}
 }
 
 //Puts a one in BitFifo
 void FifoPut1(void){
-	BitFifo_Put(1);
+	data <<= 1;
+	data++;
+	data_length++;
+    if(data_length == 8) {
+        data_length = 0;
+        while(!CharFifo_Put((char) data));
+        data = 0;
+    }
 }

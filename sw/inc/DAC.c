@@ -15,6 +15,7 @@
 
 #include "./DAC.h"
 #include "./tm4c123gh6pm.h"
+#include "SoundlessTest.h"
 
 #define TFT_CS                  (*((volatile uint32_t *)0x40007020))
 #define TFT_CS_LOW              0           // CS normally controlled by hardware
@@ -27,9 +28,9 @@
 #define RESET_HIGH              0x80
 
 const unsigned short Wave[32] = {
-  1024,1122,1215,1302,1378,1440,1486,1514,1524,1514,1486,
-  1440,1378,1302,1215,1122,1024,926,833,746,670,608,
-  562,534,524,534,562,608,670,746,833,926
+    2047, 2448, 2829, 3185, 3497, 3751, 3939, 4054, 4094, 4054, 3939, 3751, 3497,
+    3185, 2829, 2448, 2047, 1646, 1265, 909, 597, 343, 155, 40, 0, 40, 155, 343,
+    597, 909, 1265, 1646
 };
 
 bool dac_on;
@@ -37,6 +38,7 @@ bool high_freq;
 uint8_t wave_index;
 bool wave_parity;
 
+extern uint32_t SOUND;
 
 int dac_init() {
     SYSCTL_RCGCSSI_R |= 0x02;       // activate SSI1
@@ -80,7 +82,12 @@ void dac_ISR(void) {
         return;
     }
 
-    dac_output(Wave[wave_index]);
+    #if SOUNDLESS_TEST
+        SOUND = Wave[wave_index];
+    #else
+        dac_output(Wave[wave_index]);
+    #endif
+
     if(high_freq || wave_parity) {
         wave_index = (wave_index + 1) % 32;
     }

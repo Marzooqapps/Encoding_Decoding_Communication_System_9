@@ -63,7 +63,7 @@ void dummyADC(uint32_t data){
 };
 
 void ADC_CustomHandler(uint32_t data) {
-    while(!SampleFifo_Put(data));
+    SampleFifo_Put(data);
 }
 
 // Sample the ADC using Timer0 hardware triggering using SS0
@@ -83,7 +83,7 @@ uint32_t period;
     ADCTask = &dummyADC;  // user function
     return 0;
   }
-  ADCTask = &ADC_CustomHandler;  // user function
+  ADCTask = task;  // user function
 
   // **** GPIO pin initialization ****
   switch(channelNum){             // 1) activate clock

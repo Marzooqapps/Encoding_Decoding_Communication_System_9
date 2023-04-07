@@ -5,10 +5,12 @@
 #include "./inc/FIFO.h"
 #include "./inc/DAC.h"
 #include "./lib/encoder/switches/switches.h"
-#include "inc/Timer2A.h";
+#include "inc/Timer2A.h"
+#include "inc/Timer5A.h"
+#include "inc/Timer1A.h"
 
 #define ENCODER_PROCESSCHAR_PERIOD 1600000
-#define ENCODER_PROCESSBIT_PERIOD 80000
+#define ENCODER_PROCESSBIT_PERIOD 800000
 #define DAC_PERIOD 1250
 
 AddIndexFifo(Bit,88,bool,1,0);
@@ -16,12 +18,15 @@ AddIndexFifo(Bit,88,bool,1,0);
 void Encoder_Init(void) {
     BitFifo_Init();
     dac_init();
-    Switches_Init();
-    // TODO: arm Encoder_ProcessChar with period ENCODER_PROCESSCHAR_PERIOD
+//    Switches_Init();
+
+    Timer1A_Init(&Encoder_ProcessChar, ENCODER_PROCESSCHAR_PERIOD, 3);
+
     // TODO: arm Encoder_ProcessBit with period ENCODER_PROCESSBIT_PERIOD
+    Timer5A_Init(&Encoder_ProcessBit, ENCODER_PROCESSBIT_PERIOD, 4);
 
     // TODO: arm DAC_ISR with period DAC_PERIOD
-    Timer2A_Init(&dac_ISR, DAC_PERIOD, 3);
+    Timer2A_Init(&dac_ISR, DAC_PERIOD, 5);
 
 }
 
@@ -52,7 +57,7 @@ void Encoder_ProcessBit(void) {
         return;
     }
 
-    if(bit) {
+    if(!bit) {
         dac_setLowFreq();
     } else {
         dac_setHighFreq();

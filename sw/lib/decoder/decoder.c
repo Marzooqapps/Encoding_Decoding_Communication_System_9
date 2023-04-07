@@ -7,8 +7,14 @@
 #include "./lib/decoder/adc/adc.h"
 #include "./lib/decoder/display/display.h"
 #include "./inc/Timer1A.h"
+#include "./inc/Timer4A.h"
+#include "SoundlessTest.h"
+
 
 #define SOUND_THRESHOLD 3131
+#if SOUNDLESS_TEST
+    #define SOUND_THRESHOLD 0
+#endif
 #define ADC_PERIOD 5000
 #define ADC_FREQ 16000
 #define CONVERSION_PERIOD 5000
@@ -22,6 +28,7 @@ uint8_t data_bits_acquired;
 uint8_t data;
 bool parity;
 bool parity_checked;
+int cooldown;
 
 int32_t Dump1[512];
 int32_t Dump2[512];
@@ -31,6 +38,8 @@ int DumpIndex2;
 uint32_t RawDump1[512];
 int RawDumpIndex1;
 
+extern uint32_t SOUND;
+
 void Decoder_Init(void) {
     i = 0;
     decoding_msg = false;
@@ -38,6 +47,7 @@ void Decoder_Init(void) {
     data = 0;
     parity = 0;
     parity_checked = false;
+    cooldown = 0;
     DumpIndex1 = 0;
     DumpIndex2 = 0;
 
@@ -47,25 +57,30 @@ void Decoder_Init(void) {
     Display_Init();
 
 //    ADC0_InitTimer0ATriggerSeq3PD3(ADC_PERIOD);
-    ADC0_InitTimer0ATriggerSeq0(0, ADC_FREQ, (void *) 0);
+    ADC0_InitTimer0ATriggerSeq0(0, ADC_FREQ, &Decoder_ConversionISR);
 
     // TODO: arm Decoder_ConversionISR with period CONVERSION_PERIOD
-    Timer1A_Init(&Decoder_Test, CONVERSION_PERIOD, 3);
+//    Timer1A_Init(&Decoder_ConversionISR, CONVERSION_PERIOD, 3);
 
     // TODO: arm Decoder_DecodeISR with period DECODE_PERIOD
+    Timer4A_Init(&Decoder_DecodeISR, DECODE_PERIOD, 3);
+
+
 
 
 }
 
-void Decoder_ConversionISR(void) {  // Converts output of ADC to tristate value (off/lowfreq/highfreq)
-    uint32_t x;
-    if(!SampleFifo_Get(&x)) {
-        return;
-    }
-    if(x < SOUND_THRESHOLD) {
-        while(!DecodedBitFifo_Put(-1));
-        return;
-    }
+void Decoder_ConversionISR(uint32_t data) {  // Converts output of ADC to tristate value (off/lowfreq/highfreq)
+    #if SOUNDLESS_TEST
+        uint32_t x = SOUND;
+    #else
+        uint32_t x = data;
+    #endif
+
+
+//    if(x < SOUND_THRESHOLD) {
+//        return;
+//    }
     DFT(i, x);
     i++;
     if(i == 16) {
@@ -73,10 +88,17 @@ void Decoder_ConversionISR(void) {  // Converts output of ADC to tristate value 
         int32_t amp2 = Mag2();
         i = 0;
 
-        if(amp1 > amp2) {  // low freq
+        if(cooldown) {
+            cooldown--;
+            return;
+        }
+
+        if(amp1 - amp2 > 10000000) {  // low freq
             while(!DecodedBitFifo_Put(0));
-        } else {  // high freq
+            cooldown = 9;
+        } else if(amp2 - amp1 > 10000000){  // high freq
             while(!DecodedBitFifo_Put(1));
+            cooldown = 9;
         }
     }
 }
@@ -87,16 +109,16 @@ void Decoder_DecodeISR(void) { // Converts sequence of bits to character
     if(!DecodedBitFifo_Get(&bit)) {
         return;
     }
-    if(bit == -1) {
-        if(decoding_msg) {  // something went wrong, the whole message couldn't be decoded
-            Display_Error();
-            data = 0;
-            decoding_msg = false;
-            data_bits_acquired = 0;
-            parity = 0;
-        }
-        return;
-    }
+//    if(bit == -1) {
+//        if(decoding_msg) {  // something went wrong, the whole message couldn't be decoded
+//            Display_Error();
+//            data = 0;
+//            decoding_msg = false;
+//            data_bits_acquired = 0;
+//            parity = 0;
+//        }
+//        return;
+//    }
 
     if(bit == 0 && !decoding_msg) {  // start bit
         decoding_msg = true;

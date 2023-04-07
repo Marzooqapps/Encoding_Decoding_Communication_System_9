@@ -44,19 +44,21 @@ void NAME ## Fifo_Init(void){ long sr;  \
   EndCritical(sr);                      \
 }                                       \
 int NAME ## Fifo_Put (TYPE data){       \
-  if(( NAME ## PutI - NAME ## GetI ) & ~(SIZE-1)){  \
+  if(( NAME ## PutI - NAME ## GetI ) % SIZE == SIZE - 1){  \
     return(FAIL);      \
   }                    \
-  NAME ## Fifo[ NAME ## PutI &(SIZE-1)] = data; \
+  NAME ## Fifo[ NAME ## PutI] = data; \
   NAME ## PutI ## ++;  \
+  NAME ## PutI %= SIZE; \
   return(SUCCESS);     \
 }                      \
 int NAME ## Fifo_Get (TYPE *datapt){  \
   if( NAME ## PutI == NAME ## GetI ){ \
     return(FAIL);      \
   }                    \
-  *datapt = NAME ## Fifo[ NAME ## GetI &(SIZE-1)];  \
+  *datapt = NAME ## Fifo[ NAME ## GetI];  \
   NAME ## GetI ## ++;  \
+  NAME ## GetI %= SIZE; \
   return(SUCCESS);     \
 }                      \
 unsigned short NAME ## Fifo_Size (void){  \

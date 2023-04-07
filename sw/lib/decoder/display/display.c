@@ -32,9 +32,9 @@ void Display_Init(void) {
 
 void Display_PrintChar(char c) {
     ST7735_DrawChar(CursorX, CursorY, c, ST7735_GREEN, ST7735_BLACK, 1);
-    CursorX++;
-    if(CursorX == 21) {
-        CursorY++;
+    CursorX += 5;
+    if(CursorX >= 128) {
+        CursorY += 8;
         CursorX = 0;
     }
 }
@@ -45,6 +45,7 @@ void Display_Error(void) {
 
     CursorX = 0;
     CursorY = 0;
+    while(1);
 }
 
 void Display_ParityError(void) {
@@ -53,6 +54,7 @@ void Display_ParityError(void) {
 
     CursorX = 0;
     CursorY = 0;
+    while(1);
 }
 
 void Display_Routine(void) {
