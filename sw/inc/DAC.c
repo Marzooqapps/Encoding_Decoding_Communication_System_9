@@ -14,7 +14,7 @@
 #include <stdbool.h>
 
 #include "./DAC.h"
-#include "./tm4c123gh6pm.h"
+#include "./inc/tm4c123gh6pm.h"
 #include "SoundlessTest.h"
 
 #define TFT_CS                  (*((volatile uint32_t *)0x40007020))
@@ -78,6 +78,7 @@ int dac_output(uint16_t data) {  // data should be the 12-bit value that will be
 }
 
 void dac_ISR(void) {
+
     if(!dac_on) {
         return;
     }

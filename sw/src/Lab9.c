@@ -56,11 +56,6 @@ total: 11 bits per character
 /* Filters are also provided in /lib/Filters. */
 
 
-// Timer0A used by ADC
-// Timer1A used by Decoder
-// Timer2A used by Encoder
-// Timer3A used by input
-
 //Function Declarations//
 void FifoPut0(void);
 void FifoPut1(void);
@@ -71,6 +66,7 @@ uint8_t data_length;
 
 int main(void) {
     PLL_Init(4);
+    Unified_Port_Init();
 
     data = 0;
     data_length = 0;
@@ -78,14 +74,11 @@ int main(void) {
     Encoder_Init();
     Decoder_Init();
 	
-    //Initialize Port F for input
-    EdgePortF_Init(FifoPut0, FifoPut1);
-	
 
-//    Encoder_Test(-1);
+//    Encoder_Test(0);
 
     while (1) {
-//        Swithces_Routine();
+        Swithces_Routine();
         Display_Routine();
     }
 }

@@ -9,6 +9,7 @@
 #include "./inc/Timer1A.h"
 #include "./inc/Timer4A.h"
 #include "SoundlessTest.h"
+#include "./inc/tm4c123gh6pm.h"
 
 
 #define SOUND_THRESHOLD 3131
@@ -35,7 +36,7 @@ int32_t Dump2[512];
 int DumpIndex1;
 int DumpIndex2;
 
-uint32_t RawDump1[512];
+uint32_t RawDump1[2048];
 int RawDumpIndex1;
 
 extern uint32_t SOUND;
@@ -50,19 +51,15 @@ void Decoder_Init(void) {
     cooldown = 0;
     DumpIndex1 = 0;
     DumpIndex2 = 0;
+    RawDumpIndex1 = 0;
 
     DecodedBitFifo_Init();
 
     DFT_Init();
     Display_Init();
 
-//    ADC0_InitTimer0ATriggerSeq3PD3(ADC_PERIOD);
     ADC0_InitTimer0ATriggerSeq0(0, ADC_FREQ, &Decoder_ConversionISR);
 
-    // TODO: arm Decoder_ConversionISR with period CONVERSION_PERIOD
-//    Timer1A_Init(&Decoder_ConversionISR, CONVERSION_PERIOD, 3);
-
-    // TODO: arm Decoder_DecodeISR with period DECODE_PERIOD
     Timer4A_Init(&Decoder_DecodeISR, DECODE_PERIOD, 3);
 
 
@@ -95,10 +92,10 @@ void Decoder_ConversionISR(uint32_t data) {  // Converts output of ADC to trista
 
         if(amp1 - amp2 > 10000000) {  // low freq
             while(!DecodedBitFifo_Put(0));
-            cooldown = 9;
+            cooldown = 99;
         } else if(amp2 - amp1 > 10000000){  // high freq
             while(!DecodedBitFifo_Put(1));
-            cooldown = 9;
+            cooldown = 99;
         }
     }
 }
@@ -147,15 +144,13 @@ void Decoder_DecodeISR(void) { // Converts sequence of bits to character
     parity ^= bit;
 }
 
-void Decoder_Test(void) {
+void Decoder_Test(uint32_t data) {
+
+    GPIO_PORTE_DATA_R |= 0x02;
     // When running this, adc should be armed
+    uint32_t x = data;
 
-    uint32_t x;
-    if(!SampleFifo_Get(&x)) {
-        return;
-    }
-
-    if(RawDumpIndex1 < 512) {
+    if(RawDumpIndex1 < 2048) {
         RawDump1[RawDumpIndex1] = x;
         RawDumpIndex1++;
     }
@@ -175,6 +170,8 @@ void Decoder_Test(void) {
 
     int64_t avg_1 = 0;
     int64_t avg_2 = 0;
+
+    GPIO_PORTE_DATA_R &= ~0x02;
 }
 
 
